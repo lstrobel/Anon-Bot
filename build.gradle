@@ -14,3 +14,13 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     implementation 'com.discord4j:discord4j-core:3.0.0'
 }
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': project.name,
+                'Implementation-Version': version,
+                'Main-Class': 'Main'
+    }
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
