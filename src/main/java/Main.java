@@ -2,37 +2,55 @@ import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
-import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class Main {
     
+    private static final Map<String, Command> commands = new HashMap<>();
+    
     public static void main(String[] args) {
         
-        Properties properties = handleConfigFile();
+        final Properties properties = handleConfigFile();
+        final String command_id = properties.getProperty("command_identifier");
         DiscordClientBuilder builder =
                 new DiscordClientBuilder(properties.getProperty("api_token"));
-        DiscordClient client = builder.build();
+        final DiscordClient client = builder.build();
         
+        // Login to Discord
         client.getEventDispatcher().on(ReadyEvent.class)
                 .subscribe(event -> {
                     User self = event.getSelf();
                     System.out.println(String.format("Logged in as %s#%s", self.getUsername(), self.getDiscriminator()));
                 });
         
+        //TODO: Remove this test command
+        commands.put("ping", event -> event.getMessage().getChannel()
+                .flatMap(channel -> channel.createMessage("pong"))
+                .then());
+        
+        // Attach listener to MessageCreateEvent, which runs corresponding commands
         client.getEventDispatcher().on(MessageCreateEvent.class)
-                .map(MessageCreateEvent::getMessage)
-                .filter(message -> message.getAuthor().map(user -> !user.isBot()).orElse(false))
-                .filter(message -> message.getContent().orElse("").equalsIgnoreCase("!ping"))
-                .flatMap(Message::getChannel)
-                .flatMap(channel -> channel.createMessage("Pong!"))
+                // Filter out bot users
+                .filter(event -> event.getMessage().getAuthor().map(user -> !user.isBot()).orElse(false))
+                // Iterate through commands
+                .flatMap(event -> Mono.justOrEmpty(event.getMessage().getContent())
+                        .flatMap(content -> Flux.fromIterable(commands.entrySet())
+                                // If the command matches, run it
+                                .filter(entry -> content.startsWith(command_id + entry.getKey()))
+                                .flatMap(entry -> entry.getValue().execute(event))
+                                .next()
+                        )
+                )
                 .subscribe();
         
         client.login().block();
-        
     }
     
     /**
@@ -58,6 +76,7 @@ public class Main {
                 
                 out = new FileOutputStream("config.properties");
                 properties.setProperty("api_token", "YOUR TOKEN HERE");
+                properties.setProperty("command_identifier", ">");
                 properties.store(out, null);
                 
                 System.exit(0);
