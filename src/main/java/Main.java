@@ -7,6 +7,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -49,6 +53,16 @@ public class Main {
                         )
                 )
                 .subscribe();
+    
+        try (Connection con = DriverManager.getConnection("jdbc:sqlite:server_database")){
+            Statement s = con.createStatement();
+            s.execute("CREATE TABLE IF NOT EXISTS quotes (\n"
+                    + "id integer PRIMARY KEY,\n"
+                    + "quote text NOT NULL,\n"
+                    + "user text NOT NULL);");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         
         client.login().block();
     }
