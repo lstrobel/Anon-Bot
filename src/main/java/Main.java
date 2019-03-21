@@ -7,17 +7,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.*;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 public class Main {
     
-    private static final Map<String, Command> commands = new HashMap<>();
+    private static final Map<String, Command> COMMANDS = new HashMap<>();
     
     public static void main(String[] args) {
         
@@ -35,7 +31,7 @@ public class Main {
                 });
         
         //TODO: Remove this test command
-        commands.put("ping", event -> event.getMessage().getChannel()
+        COMMANDS.put("ping", event -> event.getMessage().getChannel()
                 .flatMap(channel -> channel.createMessage("pong"))
                 .then());
         
@@ -43,9 +39,9 @@ public class Main {
         client.getEventDispatcher().on(MessageCreateEvent.class)
                 // Filter out bot users
                 .filter(event -> event.getMessage().getAuthor().map(user -> !user.isBot()).orElse(false))
-                // Iterate through commands
+                // Iterate through COMMANDS
                 .flatMap(event -> Mono.justOrEmpty(event.getMessage().getContent())
-                        .flatMap(content -> Flux.fromIterable(commands.entrySet())
+                        .flatMap(content -> Flux.fromIterable(COMMANDS.entrySet())
                                 // If the command matches, run it
                                 .filter(entry -> content.startsWith(command_id + entry.getKey()))
                                 .flatMap(entry -> entry.getValue().execute(event))
@@ -53,16 +49,8 @@ public class Main {
                         )
                 )
                 .subscribe();
-    
-        try (Connection con = DriverManager.getConnection("jdbc:sqlite:server_database")){
-            Statement s = con.createStatement();
-            s.execute("CREATE TABLE IF NOT EXISTS quotes (\n"
-                    + "id integer PRIMARY KEY,\n"
-                    + "quote text NOT NULL,\n"
-                    + "user text NOT NULL);");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        
+        DatabaseHandler.initializeDatabase();
         
         client.login().block();
     }
@@ -121,5 +109,4 @@ public class Main {
         
         return properties;
     }
-    
 }
