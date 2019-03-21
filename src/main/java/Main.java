@@ -7,9 +7,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class Main {
     
@@ -33,6 +33,10 @@ public class Main {
         //TODO: Remove this test command
         COMMANDS.put("ping", event -> event.getMessage().getChannel()
                 .flatMap(channel -> channel.createMessage("pong"))
+                .then());
+        
+        COMMANDS.put("name", event -> event.getMessage().getChannel()
+                .flatMap(channel -> channel.createMessage(generateName()))
                 .then());
         
         // Attach listener to MessageCreateEvent, which runs corresponding commands
@@ -108,5 +112,23 @@ public class Main {
         }
         
         return properties;
+    }
+    
+    private static String generateName() {
+        return generateName(new Random().nextInt());
+    }
+    
+    private static String generateName(long seed) {
+        try {
+            Random random = new Random(seed);
+            List<String> animals = Files.readAllLines(Paths.get("res/animals.txt"));
+            List<String> colors = Files.readAllLines(Paths.get("res/colors.txt"));
+            return colors.get(random.nextInt(colors.size())) + "_" +
+                    animals.get(random.nextInt(animals.size()));
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
