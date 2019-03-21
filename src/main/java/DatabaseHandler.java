@@ -16,15 +16,16 @@ public class DatabaseHandler {
             
             Statement stmt = con.createStatement();
             stmt.execute("CREATE TABLE IF NOT EXISTS \"ServerConfiguration\"(\n" +
-                    "\t\"server_id\" Text NOT NULL PRIMARY KEY,\n" +
-                    "\t\"can_choose_id\" Boolean NOT NULL DEFAULT 0,\n" +
-                    "\t\"automatic_blacklist\" Boolean NOT NULL DEFAULT 0,\n" +
-                    "\t\"previous_id_capacity\" Integer NOT NULL DEFAULT 10,\n" +
-                    "\t\"default_timeout_milliseconds\" Integer NOT NULL DEFAULT 60000 );");
+                    "\"server_id\" Text NOT NULL PRIMARY KEY,\n" +
+                    "\"can_choose_id\" Boolean NOT NULL DEFAULT 0,\n" +
+                    "\"id_cooldown_milliseconds\" Integer NOT NULL DEFAULT 0,\n" +
+                    "\"previous_id_capacity\" Integer NOT NULL DEFAULT 10,\n" +
+                    "\"automatic_blacklist\" Boolean NOT NULL DEFAULT 0,\n" +
+                    "\"default_timeout_milliseconds\" Integer NOT NULL DEFAULT 60000 );");
             
             stmt.execute("  CREATE TABLE IF NOT EXISTS \"AnonymousEnabledChannels\"(\n" +
-                    "\t\"channel_id\" Text NOT NULL PRIMARY KEY,\n" +
-                    "\t\"server_id\" Text NOT NULL,\n" +
+                    "\"channel_id\" Text NOT NULL PRIMARY KEY,\n" +
+                    "\"server_id\" Text NOT NULL,\n" +
                     "CONSTRAINT \"unique_server_id\" UNIQUE ( \"server_id\" ) );");
             
         } catch (SQLException e) {
