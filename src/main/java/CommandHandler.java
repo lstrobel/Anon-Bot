@@ -30,6 +30,7 @@ public class CommandHandler {
                 .flatMap(channel -> channel.createMessage("pong"))
                 .then());
         
+        //TODO: Remove these test commands
         commandMap.put("name", event -> event.getMessage().getChannel()
                 .flatMap(channel -> channel.createMessage(generateName()))
                 .then());
@@ -47,7 +48,9 @@ public class CommandHandler {
         return messageEventMono
                 // Remove messages from bot users
                 .filter(event -> event.getMessage().getAuthor().map(user -> !user.isBot()).orElse(false))
+                // Map to Mono<String> representing the content
                 .flatMap(event -> Mono.justOrEmpty(event.getMessage().getContent()))
+                // Search through commandMap and execute matching commands
                 .flatMap(content -> Flux.fromIterable(commandMap.entrySet())
                         .filter(entry -> content.equals(prefix + entry.getKey()))
                         .flatMap(entry -> entry.getValue().execute(messageEvent))
@@ -60,6 +63,8 @@ public class CommandHandler {
         return generateName(new Random().nextInt());
     }
     
+    //TODO: Make this faster by caching, maybe in singleton class? No need to prematurely
+    // optimize for now, though
     private static String generateName(long seed) {
         try {
             Random random = new Random(seed);
