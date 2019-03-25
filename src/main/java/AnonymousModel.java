@@ -1,7 +1,9 @@
+import discord4j.core.object.entity.Channel.Type;
+import discord4j.core.object.entity.TextChannel;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Mono;
 
-import java.nio.channels.Channel;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -40,7 +42,14 @@ public class AnonymousModel {
         }
     }
     
-    public Mono<Channel> getCurrentAnonymousChannelForUser(Mono<User> user) {
-        throw new RuntimeException("not implemented");
+    public Mono<TextChannel> getCurrentAnonymousChannelForUser(User user) {
+        return user
+                .getClient()
+                .getGuildById(Snowflake.of("556690884121591838"))// Grab this from db - current guild
+                .flatMap(guild -> guild.getChannelById(Snowflake.of("556690884121591841")))// Grab this from db - current channel
+                // Ensure that the stored channel is a text channel - it should be.
+                .filter(guildChannel -> guildChannel.getType().equals(Type.GUILD_TEXT))
+                // Cast to a TextChannel to send messages - we ensured this is okay above
+                .map(guildChannel -> (TextChannel) guildChannel);
     }
 }

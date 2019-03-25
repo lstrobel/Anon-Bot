@@ -1,7 +1,5 @@
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Channel.Type;
-import discord4j.core.object.entity.TextChannel;
-import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -45,23 +43,19 @@ public class CommandHandler {
                 // Only allow this command from DMs
                 .filter(channel -> channel.getType().equals(Type.DM))
                 // Map to user's currently-set anonymous channel
-                .flatMap(message -> event
-                        .getMessage()
-                        .getAuthor()
-                        .orElseThrow(RuntimeException::new)
-                        .getClient()
-                        .getGuildById(Snowflake.of("556690884121591838"))// Grab this from db - current guild
-                        .flatMap(guild -> guild.getChannelById(Snowflake.of("556690884121591841")))// Grab this from db - current channel
+                .flatMap(message -> AnonymousModel.getInstance()
+                        .getCurrentAnonymousChannelForUser(event.getMessage()
+                                .getAuthor()
+                                .orElseThrow(RuntimeException::new)
+                        )
                 )
-                // Ensure that the stored channel is a text channel - it should be.
-                .filter(guildChannel -> guildChannel.getType().equals(Type.GUILD_TEXT))
-                // Cast to a TextChannel to send messages - we ensured this is okay above
-                .map(guildChannel -> (TextChannel) guildChannel)
                 // Send the message
                 .flatMap(channel -> channel.createMessage(
-                        event.getMessage().getAuthor().orElseThrow(RuntimeException::new).getUsername() + " just sent an anonymous message")
-                )
-                .then());
+                        event.getMessage().getContent().orElse("").split(" ")[1] //TODO: you need to bounds check here someways
+                        
+                        //event.getMessage().getAuthor().orElseThrow(RuntimeException::new)
+                        // .getUsername() + " just sent an anonymous message")}
+                ).then()));
         // ------------------------------------
     }
     
@@ -83,7 +77,7 @@ public class CommandHandler {
                 .flatMap(event -> Mono.justOrEmpty(event.getMessage().getContent()))
                 // Search through commandMap and execute matching commands
                 .flatMap(content -> Flux.fromIterable(commandMap.entrySet())
-                        .filter(entry -> content.equals(prefix + entry.getKey()))
+                        .filter(entry -> content.startsWith(prefix + entry.getKey()))
                         .flatMap(entry -> entry.getValue().execute(messageEvent))
                         .next()
                 );
