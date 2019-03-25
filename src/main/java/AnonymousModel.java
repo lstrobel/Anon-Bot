@@ -1,4 +1,5 @@
 import discord4j.core.object.entity.Channel.Type;
+import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.TextChannel;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.util.Snowflake;
@@ -51,6 +52,7 @@ public class AnonymousModel {
         }
     }
     
+    //TODO: Implement
     public Mono<TextChannel> getChannelForUser(User user) {
         return user
                 .getClient()
@@ -62,8 +64,14 @@ public class AnonymousModel {
                 .map(guildChannel -> (TextChannel) guildChannel);
     }
     
+    //TODO: Implement
     public String getIDForUser(User user) {
         throw new RuntimeException("not implemented");
         //return CommandHandler.generateName();
+    }
+    
+    //TODO: Implement
+    public Mono<Void> initGuildConfig(Guild guild){
+        throw new RuntimeException("not implemented");
     }
 }
