@@ -3,6 +3,8 @@ import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Properties;
@@ -12,6 +14,7 @@ import java.util.Properties;
  */
 public class Main {
     
+    public static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     
     public static void main(String[] args) {
         
@@ -25,12 +28,15 @@ public class Main {
         client.getEventDispatcher().on(ReadyEvent.class)
                 .subscribe(event -> {
                     User self = event.getSelf();
-                    System.out.println(String.format("Logged in as %s#%s", self.getUsername(), self.getDiscriminator()));
+                    LOGGER.info(String.format("Logged in as %s#%s", self.getUsername(),
+                            self.getDiscriminator()));
                 });
         
         // Attach listener to MessageCreateEvent, which runs corresponding commands
         client.getEventDispatcher().on(MessageCreateEvent.class)
                 .flatMap(event -> CommandHandler.getInstance().handleCommand(command_id, event))
+                .doOnError(throwable -> LOGGER.error("Error thrown during message event", throwable))
+                .retry()
                 .subscribe();
         
         //TODO: Do something with this, somewhere
@@ -56,9 +62,8 @@ public class Main {
             File configFile = new File("config.properties");
             
             if (!configFile.exists()) { // Create a config.properties if there isn't one, and quit
-                System.out.println(
-                        "Unable to find a config.properties file. Creating one for you.");
-                System.out.println("Please fill out the config then restart.");
+                LOGGER.warn("Unable to find a config.properties file. Creating one for you.");
+                LOGGER.warn("Please fill out the config then restart.");
                 
                 out = new FileOutputStream("config.properties");
                 properties.setProperty("api_token", "YOUR TOKEN HERE");

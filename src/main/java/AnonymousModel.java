@@ -2,6 +2,8 @@ import discord4j.core.object.entity.Channel.Type;
 import discord4j.core.object.entity.TextChannel;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.util.Snowflake;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.sql.Connection;
@@ -11,8 +13,11 @@ import java.sql.Statement;
 
 public class AnonymousModel {
     
+    public static final Logger LOGGER = LoggerFactory.getLogger(AnonymousModel.class);
+    
     private static AnonymousModel ourInstance = new AnonymousModel();
     
+    // Singleton instance
     public static AnonymousModel getInstance() {
         return ourInstance;
     }
@@ -38,11 +43,11 @@ public class AnonymousModel {
                     "CONSTRAINT \"unique_server_id\" UNIQUE ( \"server_id\" ) );");
             
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.error("SQL Exception on db initialization", e);
         }
     }
     
-    public Mono<TextChannel> getCurrentAnonymousChannelForUser(User user) {
+    public Mono<TextChannel> getChannelForUser(User user) {
         return user
                 .getClient()
                 .getGuildById(Snowflake.of("556690884121591838"))// Grab this from db - current guild
@@ -51,5 +56,10 @@ public class AnonymousModel {
                 .filter(guildChannel -> guildChannel.getType().equals(Type.GUILD_TEXT))
                 // Cast to a TextChannel to send messages - we ensured this is okay above
                 .map(guildChannel -> (TextChannel) guildChannel);
+    }
+    
+    public String getIDForUser(User user) {
+        throw new RuntimeException("not implemented");
+        //return CommandHandler.generateName();
     }
 }

@@ -1,5 +1,7 @@
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Channel.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -15,6 +17,8 @@ import java.util.Random;
  */
 public class CommandHandler {
     
+    public static final Logger LOGGER = LoggerFactory.getLogger(CommandHandler.class);
+    
     private static CommandHandler ourInstance = new CommandHandler();
     
     // Singleton instance
@@ -23,12 +27,14 @@ public class CommandHandler {
     }
     
     private final Map<String, Command> commandMap; // Maps string inputs to Command objects
+    private final AnonymousModel model;
     
     /**
      * Creates the handler, and adds all of the commands to the command map.
      */
     private CommandHandler() {
         commandMap = new HashMap<>();
+        model = AnonymousModel.getInstance();
         
         commandMap.put("ping", event -> event.getMessage().getChannel()
                 .flatMap(channel -> channel.createMessage("pong"))
@@ -43,15 +49,14 @@ public class CommandHandler {
                 // Only allow this command from DMs
                 .filter(channel -> channel.getType().equals(Type.DM))
                 // Map to user's currently-set anonymous channel
-                .flatMap(message -> AnonymousModel.getInstance()
-                        .getCurrentAnonymousChannelForUser(event.getMessage()
-                                .getAuthor()
-                                .orElseThrow(RuntimeException::new)
+                .flatMap(message -> model.getChannelForUser(
+                        event.getMessage().getAuthor().orElseThrow(RuntimeException::new)
                         )
                 )
                 // Send the message
                 .flatMap(channel -> channel.createMessage(
-                        event.getMessage().getContent().orElse("").split(" ")[1] //TODO: you need to bounds check here someways
+                        "`" + model.getIDForUser(event.getMessage().getAuthor().orElseThrow(RuntimeException::new)) + "` " +
+                                event.getMessage().getContent().orElse("").split(" ")[1] //TODO: you need to bounds check here someways
                         
                         //event.getMessage().getAuthor().orElseThrow(RuntimeException::new)
                         // .getUsername() + " just sent an anonymous message")}
@@ -84,7 +89,7 @@ public class CommandHandler {
     }
     
     // TODO: Javadoc
-    private static String generateName() {
+    public static String generateName() {
         return generateName(new Random().nextInt());
     }
     
@@ -100,7 +105,7 @@ public class CommandHandler {
                     animals.get(random.nextInt(animals.size()));
             
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Error in generateName", e);
         }
         return null;
     }
