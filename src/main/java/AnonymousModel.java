@@ -26,6 +26,8 @@ public class AnonymousModel {
     
     private AnonymousModel() {
         try {
+            LOGGER.info("Starting database...");
+            
             Connection con = DriverManager.getConnection(DATABASE_URL);
             
             Statement stmt = con.createStatement();
@@ -41,6 +43,8 @@ public class AnonymousModel {
                     "\"channel_id\" Text NOT NULL PRIMARY KEY,\n" +
                     "\"server_id\" Text NOT NULL,\n" +
                     "CONSTRAINT \"unique_server_id\" UNIQUE ( \"server_id\" ) );");
+            
+            LOGGER.info("Database up");
             
         } catch (SQLException e) {
             LOGGER.error("SQL Exception on db initialization", e);
