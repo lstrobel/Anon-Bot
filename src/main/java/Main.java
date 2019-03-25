@@ -81,7 +81,7 @@ public class Main {
             
             
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error on parsing of config file", e);
         } finally { // Close streams
             if (out != null) {
                 try {
