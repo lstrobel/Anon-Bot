@@ -3,17 +3,15 @@ import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.Properties;
 
+/**
+ * Instantiates and runs core bot functionality
+ */
 public class Main {
     
-    private static final Map<String, Command> COMMANDS = new HashMap<>();
     
     public static void main(String[] args) {
         
@@ -30,28 +28,9 @@ public class Main {
                     System.out.println(String.format("Logged in as %s#%s", self.getUsername(), self.getDiscriminator()));
                 });
         
-        //TODO: Remove this test command
-        COMMANDS.put("ping", event -> event.getMessage().getChannel()
-                .flatMap(channel -> channel.createMessage("pong"))
-                .then());
-        
-        COMMANDS.put("name", event -> event.getMessage().getChannel()
-                .flatMap(channel -> channel.createMessage(generateName()))
-                .then());
-        
         // Attach listener to MessageCreateEvent, which runs corresponding commands
         client.getEventDispatcher().on(MessageCreateEvent.class)
-                // Filter out bot users
-                .filter(event -> event.getMessage().getAuthor().map(user -> !user.isBot()).orElse(false))
-                // Iterate through COMMANDS
-                .flatMap(event -> Mono.justOrEmpty(event.getMessage().getContent())
-                        .flatMap(content -> Flux.fromIterable(COMMANDS.entrySet())
-                                // If the command matches, run it
-                                .filter(entry -> content.startsWith(command_id + entry.getKey()))
-                                .flatMap(entry -> entry.getValue().execute(event))
-                                .next()
-                        )
-                )
+                .flatMap(event -> CommandHandler.getInstance().handleCommand(command_id, event))
                 .subscribe();
         
         DatabaseHandler.initializeDatabase();
@@ -112,23 +91,5 @@ public class Main {
         }
         
         return properties;
-    }
-    
-    private static String generateName() {
-        return generateName(new Random().nextInt());
-    }
-    
-    private static String generateName(long seed) {
-        try {
-            Random random = new Random(seed);
-            List<String> animals = Files.readAllLines(Paths.get("res/animals.txt"));
-            List<String> colors = Files.readAllLines(Paths.get("res/colors.txt"));
-            return colors.get(random.nextInt(colors.size())) + "_" +
-                    animals.get(random.nextInt(animals.size()));
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 }

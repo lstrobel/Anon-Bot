@@ -40,7 +40,6 @@ boysenberry
 brandy
 briquette
 bronze
-bronze
 brown
 bubbles
 buff
@@ -302,7 +301,6 @@ umber
 urobilin
 vanilla
 verdigris
-vermilion
 vermilion
 veronica
 violet
