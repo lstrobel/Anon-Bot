@@ -87,14 +87,14 @@ public class Main {
                 try {
                     out.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Couldn't close stream", e);
                 }
             }
             if (input != null) {
                 try {
                     input.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Couldn't close stream", e);
                 }
             }
         }
