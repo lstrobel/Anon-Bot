@@ -1,5 +1,3 @@
-package model;
-
 import discord4j.core.object.entity.User;
 import reactor.core.publisher.Mono;
 
