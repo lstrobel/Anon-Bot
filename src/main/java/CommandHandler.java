@@ -30,7 +30,7 @@ public class CommandHandler {
                 .flatMap(channel -> channel.createMessage("pong"))
                 .then());
         
-        //TODO: Remove these test commands
+        //TODO: Remove these test commands ----
         commandMap.put("name", event -> event.getMessage().getChannel()
                 .flatMap(channel -> channel.createMessage(generateName()))
                 .then());
@@ -39,6 +39,7 @@ public class CommandHandler {
                 .filter(channel -> channel.getType().equals(Type.DM))
                 .flatMap(messageChannel -> messageChannel.createMessage("youre in a dm!"))
                 .then());
+        // ------------------------------------
     }
     
     
@@ -63,8 +64,8 @@ public class CommandHandler {
         return generateName(new Random().nextInt());
     }
     
-    //TODO: Make this faster by caching, maybe in singleton class? No need to prematurely
-    // optimize for now, though
+    //TODO: Make this faster by caching, maybe in singleton class or in the fields of this class?
+    // No need to prematurely optimize for now, though
     private static String generateName(long seed) {
         try {
             Random random = new Random(seed);

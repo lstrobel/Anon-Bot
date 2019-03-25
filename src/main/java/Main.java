@@ -3,6 +3,7 @@ import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
+import model.AnonymousModel;
 
 import java.io.*;
 import java.util.Properties;
@@ -33,7 +34,8 @@ public class Main {
                 .flatMap(event -> CommandHandler.getInstance().handleCommand(command_id, event))
                 .subscribe();
         
-        DatabaseHandler.initializeDatabase();
+        //TODO: Do something with this, somewhere
+        AnonymousModel.getInstance();
         
         client.login().block();
     }
