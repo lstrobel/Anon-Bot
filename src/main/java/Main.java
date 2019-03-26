@@ -33,10 +33,10 @@ public class Main {
                             self.getDiscriminator()));
                 });
         
-        // Attach listener for guild creation - every time we join a guild
+        /*// Attach listener for guild creation - every time we join a guild
         client.getEventDispatcher().on(GuildCreateEvent.class)
                 .flatMap(event -> AnonymousModel.getInstance().initGuildConfig(event.getGuild()))
-                .subscribe();
+                .subscribe();*/
         
         // Attach listener to MessageCreateEvent, which runs corresponding commands
         client.getEventDispatcher().on(MessageCreateEvent.class)

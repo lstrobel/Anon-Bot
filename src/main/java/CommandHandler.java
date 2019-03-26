@@ -45,7 +45,7 @@ public class CommandHandler {
                 .flatMap(channel -> channel.createMessage(generateName()))
                 .then());
         
-        commandMap.put("testAnon", event -> event.getMessage().getChannel()
+        commandMap.put("anon", event -> event.getMessage().getChannel()
                 // Only allow this command from DMs
                 .filter(channel -> channel.getType().equals(Type.DM))
                 // Map to user's currently-set anonymous channel
