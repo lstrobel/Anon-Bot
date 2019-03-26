@@ -1,6 +1,5 @@
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
-import discord4j.core.event.domain.guild.GuildCreateEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
@@ -41,7 +40,7 @@ public class Main {
         // Attach listener to MessageCreateEvent, which runs corresponding commands
         client.getEventDispatcher().on(MessageCreateEvent.class)
                 .flatMap(event -> CommandHandler.getInstance().handleCommand(command_id, event))
-                .doOnError(throwable -> LOGGER.error("Error thrown during message event", throwable))
+                .doOnError(e -> LOGGER.error("Error thrown during message event", e))
                 .retry()
                 .subscribe();
         

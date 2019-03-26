@@ -6,8 +6,12 @@ import discord4j.core.object.util.Snowflake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.NonNull;
 
 import java.sql.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AnonymousModel {
     
@@ -67,29 +71,50 @@ public class AnonymousModel {
      * @param user The User to grab the information for
      * @return A Mono<TextChannel> containing the TextChannel the user has set.
      */
-    public Mono<TextChannel> getChannelForUser(User user) {
+    public static Mono<TextChannel> getChannelForUser(@NonNull User user) {
+        return Mono.just(user.getId())
+                // Grab guild_id and channel_id
+                .flatMap(AnonymousModel::queryChannelForUser)
+                .flatMap(map ->
+                        user.getClient()
+                                .getGuildById(Snowflake.of(map.get("guild_id")))
+                                .flatMap(guild ->
+                                        guild.getChannelById(Snowflake.of(map.get("channel_id")))
+                                )
+                                // Ensure that the stored channel is a text channel - it should be.
+                                .filter(guildChannel ->
+                                        guildChannel.getType().equals(Type.GUILD_TEXT)
+                                )
+                                // Cast to a TextChannel to send messages - we ensured this is okay above
+                                .map(guildChannel -> (TextChannel) guildChannel)
+                );
+    }
+    
+    /**
+     * Takes the ID of a user and returns a map that maps "guild_id" and "channel_id" to the
+     * appropriate ids that the given user has stored
+     *
+     * @param userID The Snowflake representing the ID of the user to query the data for
+     * @return A map that maps "guild_id" and "channel_id" to the appropriate ids that the given
+     * user has stored
+     */
+    private static Mono<Map<String, String>> queryChannelForUser(@NonNull Snowflake userID) {
         try {
             Connection con = DriverManager.getConnection(DATABASE_URL);
             PreparedStatement pstmt = con.prepareStatement("SELECT user_id, guild_id, " +
-                    "channel_id FROM UserChannelSelections WHERE user_id = " + user.getId().asString());
+                    "channel_id FROM UserChannelSelections WHERE user_id = " + userID.asString());
             ResultSet rs = pstmt.executeQuery();
             
             rs.next();
-            final String guildID = rs.getString("guild_id");
-            final String channelID = rs.getString("channel_id");
+            Map<String, String> map = new HashMap<>();
+            map.put("guild_id", rs.getString("guild_id"));
+            map.put("channel_id", rs.getString("channel_id"));
+            return Mono.just(Collections.unmodifiableMap(map));
             
-            return user
-                    .getClient()
-                    .getGuildById(Snowflake.of(guildID))
-                    .flatMap(guild -> guild.getChannelById(Snowflake.of(channelID)))
-                    // Ensure that the stored channel is a text channel - it should be.
-                    .filter(guildChannel -> guildChannel.getType().equals(Type.GUILD_TEXT))
-                    // Cast to a TextChannel to send messages - we ensured this is okay above
-                    .map(guildChannel -> (TextChannel) guildChannel);
         } catch (SQLException e) {
-            LOGGER.error("SQL Exception on getChannelForUser", e);
+            LOGGER.error("Failure in SQL query for ChannelForUser", e);
         }
-        throw new RuntimeException("try statment passed");
+        return null;
     }
     
     //TODO: Implement
