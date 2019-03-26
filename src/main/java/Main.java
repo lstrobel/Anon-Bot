@@ -32,6 +32,9 @@ public class Main {
                             self.getDiscriminator()));
                 });
         
+        // Initialize the command handler
+        CommandHandler.init();
+        
         /*// Attach listener for guild creation - every time we join a guild
         client.getEventDispatcher().on(GuildCreateEvent.class)
                 .flatMap(event -> AnonymousModel.getInstance().initGuildConfig(event.getGuild()))
@@ -39,7 +42,7 @@ public class Main {
         
         // Attach listener to MessageCreateEvent, which runs corresponding commands
         client.getEventDispatcher().on(MessageCreateEvent.class)
-                .flatMap(event -> CommandHandler.getInstance().handleCommand(command_id, event))
+                .flatMap(event -> CommandHandler.handleCommand(command_id, event))
                 .doOnError(e -> LOGGER.error("Error thrown during message event", e))
                 .retry()
                 .subscribe();

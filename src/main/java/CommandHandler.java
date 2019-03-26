@@ -13,49 +13,42 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * Holds the commands that may get invoked from Main. Is a singleton
+ * Holds the commands that may get invoked from Main
  */
 public class CommandHandler {
     
     public static final Logger LOGGER = LoggerFactory.getLogger(CommandHandler.class);
     
-    private static CommandHandler ourInstance = new CommandHandler();
+    // Maps string inputs to Command objects
+    private static final Map<String, Command> COMMAND_MAP = new HashMap<>();
     
-    // Singleton instance
-    public static CommandHandler getInstance() {
-        return ourInstance;
-    }
-    
-    private final Map<String, Command> commandMap; // Maps string inputs to Command objects
-    private final AnonymousModel model;
+    // The database handler
+    private static final AnonymousModel MODEL = AnonymousModel.getInstance();
     
     /**
      * Creates the handler, and adds all of the commands to the command map.
      */
-    private CommandHandler() {
-        commandMap = new HashMap<>();
-        model = AnonymousModel.getInstance();
-        
-        commandMap.put("ping", event -> event.getMessage().getChannel()
+    public static void init() {
+        COMMAND_MAP.put("ping", event -> event.getMessage().getChannel()
                 .flatMap(channel -> channel.createMessage("pong"))
                 .then());
         
         //TODO: Remove these test commands ----
-        commandMap.put("name", event -> event.getMessage().getChannel()
+        COMMAND_MAP.put("name", event -> event.getMessage().getChannel()
                 .flatMap(channel -> channel.createMessage(generateName()))
                 .then());
         
-        commandMap.put("anon", event -> event.getMessage().getChannel()
+        COMMAND_MAP.put("anon", event -> event.getMessage().getChannel()
                 // Only allow this command from DMs
                 .filter(channel -> channel.getType().equals(Type.DM))
                 // Map to user's currently-set anonymous channel
-                .flatMap(message -> model.getChannelForUser(
+                .flatMap(message -> MODEL.getChannelForUser(
                         event.getMessage().getAuthor().orElseThrow(RuntimeException::new)
                         )
                 )
                 // Send the message
                 .flatMap(channel -> channel.createMessage(
-                        "`" + model.getIDForUser(event.getMessage().getAuthor().orElseThrow(RuntimeException::new)) + "` " +
+                        "`" + MODEL.getIDForUser(event.getMessage().getAuthor().orElseThrow(RuntimeException::new)) + "` " +
                                 event.getMessage().getContent().orElse("").split(" ")[1] //TODO: you need to bounds check here someways
                         
                         //event.getMessage().getAuthor().orElseThrow(RuntimeException::new)
@@ -72,7 +65,7 @@ public class CommandHandler {
      * @param messageEvent The MessageCreateEvent to parse
      * @return A Mono to subscribe to for reactive responses
      */
-    public Mono<Void> handleCommand(String prefix, MessageCreateEvent messageEvent) {
+    public static Mono<Void> handleCommand(String prefix, MessageCreateEvent messageEvent) {
         // Filter out bot users
         Mono<MessageCreateEvent> messageEventMono = Mono.just(messageEvent);
         return messageEventMono
@@ -80,8 +73,8 @@ public class CommandHandler {
                 .filter(event -> event.getMessage().getAuthor().map(user -> !user.isBot()).orElse(false))
                 // Map to Mono<String> representing the content
                 .flatMap(event -> Mono.justOrEmpty(event.getMessage().getContent()))
-                // Search through commandMap and execute matching commands
-                .flatMap(content -> Flux.fromIterable(commandMap.entrySet())
+                // Search through COMMAND_MAP and execute matching commands
+                .flatMap(content -> Flux.fromIterable(COMMAND_MAP.entrySet())
                         .filter(entry -> content.startsWith(prefix + entry.getKey()))
                         .flatMap(entry -> entry.getValue().execute(messageEvent))
                         .next()

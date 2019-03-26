@@ -13,9 +13,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Manages the connection to the database. Currently set up as a singleton, to share the
+ * connection to the db, while still remaining somewhat "static"
+ */
 public class AnonymousModel {
-    
-    public static final Logger LOGGER = LoggerFactory.getLogger(AnonymousModel.class);
     
     private static AnonymousModel ourInstance = new AnonymousModel();
     
@@ -24,15 +26,19 @@ public class AnonymousModel {
         return ourInstance;
     }
     
-    private static final String DATABASE_URL = "jdbc:sqlite:server_database.db";
+    // For whatever reason, setting this to static breaks this class
+    //TODO: Fix that
+    private final Logger LOGGER = LoggerFactory.getLogger(AnonymousModel.class);
+    
+    private Connection connection;
     
     private AnonymousModel() {
         try {
             LOGGER.info("Starting database...");
             
-            final Connection con = DriverManager.getConnection(DATABASE_URL);
+            connection = DriverManager.getConnection("jdbc:sqlite:server_database.db");
             
-            final Statement stmt = con.createStatement();
+            final Statement stmt = connection.createStatement();
             stmt.execute("CREATE TABLE IF NOT EXISTS \"ServerConfiguration\"(\n" +
                     "\"guild_id\" Text NOT NULL PRIMARY KEY,\n" +
                     "\"can_choose_id\" Boolean NOT NULL DEFAULT 0,\n" +
@@ -51,7 +57,7 @@ public class AnonymousModel {
                     "\"guild_id\" Text NOT NULL,\n" +
                     "\"channel_id\" Text NOT NULL );");
             
-            PreparedStatement pstmt = con.prepareStatement("INSERT INTO UserChannelSelections" +
+            PreparedStatement pstmt = connection.prepareStatement("INSERT INTO UserChannelSelections" +
                     "(user_id,guild_id,channel_id) VALUES(?,?,?)");
             pstmt.setString(1, "158687676587966465");
             pstmt.setString(2, "556690884121591838");
@@ -71,10 +77,10 @@ public class AnonymousModel {
      * @param user The User to grab the information for
      * @return A Mono<TextChannel> containing the TextChannel the user has set.
      */
-    public static Mono<TextChannel> getChannelForUser(@NonNull User user) {
+    public Mono<TextChannel> getChannelForUser(@NonNull User user) {
         return Mono.just(user.getId())
                 // Grab guild_id and channel_id
-                .flatMap(AnonymousModel::queryChannelForUser)
+                .flatMap(this::queryChannelForUser)
                 .flatMap(map ->
                         user.getClient()
                                 .getGuildById(Snowflake.of(map.get("guild_id")))
@@ -98,10 +104,9 @@ public class AnonymousModel {
      * @return A map that maps "guild_id" and "channel_id" to the appropriate ids that the given
      * user has stored
      */
-    private static Mono<Map<String, String>> queryChannelForUser(@NonNull Snowflake userID) {
+    private Mono<Map<String, String>> queryChannelForUser(@NonNull Snowflake userID) {
         try {
-            Connection con = DriverManager.getConnection(DATABASE_URL);
-            PreparedStatement pstmt = con.prepareStatement("SELECT user_id, guild_id, " +
+            PreparedStatement pstmt = connection.prepareStatement("SELECT user_id, guild_id, " +
                     "channel_id FROM UserChannelSelections WHERE user_id = " + userID.asString());
             ResultSet rs = pstmt.executeQuery();
             
