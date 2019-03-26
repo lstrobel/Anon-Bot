@@ -125,8 +125,7 @@ public class AnonymousModel {
     
     //TODO: Implement
     public String getIDForUser(User user) {
-        //throw new RuntimeException("not implemented");
-        return CommandHandler.generateName();
+        return "test/temp_user";
     }
     
     //TODO: Implement

@@ -1,5 +1,6 @@
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Channel.Type;
+import discord4j.core.object.entity.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -38,7 +39,7 @@ public class CommandHandler {
                 .flatMap(channel -> channel.createMessage(generateName()))
                 .then());
         
-        COMMAND_MAP.put("anon", event -> event.getMessage().getChannel()
+        COMMAND_MAP.put("anon ", event -> event.getMessage().getChannel()
                 // Only allow this command from DMs
                 .filter(channel -> channel.getType().equals(Type.DM))
                 // Map to user's currently-set anonymous channel
@@ -47,14 +48,34 @@ public class CommandHandler {
                         )
                 )
                 // Send the message
-                .flatMap(channel -> channel.createMessage(
-                        "`" + MODEL.getIDForUser(event.getMessage().getAuthor().orElseThrow(RuntimeException::new)) + "` " +
-                                event.getMessage().getContent().orElse("").split(" ")[1] //TODO: you need to bounds check here someways
-                        
-                        //event.getMessage().getAuthor().orElseThrow(RuntimeException::new)
-                        // .getUsername() + " just sent an anonymous message")}
-                ).then()));
+                .flatMap(channel -> channel.createMessage(buildAnonMessage(event.getMessage())))
+                .then());
         // ------------------------------------
+    }
+    
+    /**
+     * Will construct an anonymous message for the bot to post, given the appropriate Message
+     * containing the original command by the user.
+     *
+     * @param message The Message containing the original command by the user
+     * @return The String that the bot should post
+     */
+    private static String buildAnonMessage(Message message) {
+        String content = message.getContent().orElse("");
+        
+        StringBuilder sb =
+                new StringBuilder();
+        sb.append('`');
+        sb.append(MODEL.getIDForUser(message.getAuthor().orElseThrow(RuntimeException::new)));
+        sb.append("` ");
+        
+        if (content.substring(1).startsWith("anon")) {
+            sb.append(content.substring(content.indexOf("anon") + 4).trim());
+        } else {
+            sb.append(content.trim());
+        }
+        
+        return sb.toString();
     }
     
     /**
