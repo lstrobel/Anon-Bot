@@ -66,9 +66,7 @@ public class CommandHandler {
      * @return A Mono to subscribe to for reactive responses
      */
     public static Mono<Void> handleCommand(String prefix, MessageCreateEvent messageEvent) {
-        // Filter out bot users
-        Mono<MessageCreateEvent> messageEventMono = Mono.just(messageEvent);
-        return messageEventMono
+        return Mono.just(messageEvent)
                 // Remove messages from bot users
                 .filter(event -> event.getMessage().getAuthor().map(user -> !user.isBot()).orElse(false))
                 // Map to Mono<String> representing the content

@@ -57,6 +57,7 @@ public class AnonymousModel {
                     "\"guild_id\" Text NOT NULL,\n" +
                     "\"channel_id\" Text NOT NULL );");
             
+            //TODO: Remove this test insert
             PreparedStatement pstmt = connection.prepareStatement("INSERT INTO UserChannelSelections" +
                     "(user_id,guild_id,channel_id) VALUES(?,?,?)");
             pstmt.setString(1, "158687676587966465");
