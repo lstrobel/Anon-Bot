@@ -17,22 +17,22 @@ import java.util.Map;
  * Manages the connection to the database. Currently set up as a singleton, to share the
  * connection to the db, while still remaining somewhat "static"
  */
-public class AnonymousModel {
+public class DatabaseModel {
     
-    private static AnonymousModel ourInstance = new AnonymousModel();
+    private static DatabaseModel ourInstance = new DatabaseModel();
     
     // Singleton instance
-    public static AnonymousModel getInstance() {
+    public static DatabaseModel getInstance() {
         return ourInstance;
     }
     
     // For whatever reason, setting this to static breaks this class
     //TODO: Fix that
-    private final Logger LOGGER = LoggerFactory.getLogger(AnonymousModel.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(DatabaseModel.class);
     
     private Connection connection; // Our database connection
     
-    private AnonymousModel() {
+    private DatabaseModel() {
         try {
             LOGGER.info("Starting database...");
             

@@ -24,7 +24,7 @@ public class CommandHandler {
     private static final Map<String, Command> COMMAND_MAP = new HashMap<>();
     
     // The database handler
-    private static final AnonymousModel MODEL = AnonymousModel.getInstance();
+    private static final DatabaseModel MODEL = DatabaseModel.getInstance();
     
     /**
      * Creates the handler, and adds all of the commands to the command map.

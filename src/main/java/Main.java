@@ -37,7 +37,7 @@ public class Main {
         
         /*// Attach listener for guild creation - every time we join a guild
         client.getEventDispatcher().on(GuildCreateEvent.class)
-                .flatMap(event -> AnonymousModel.getInstance().initGuildConfig(event.getGuild()))
+                .flatMap(event -> DatabaseModel.getInstance().initGuildConfig(event.getGuild()))
                 .subscribe();*/
         
         // Attach listener to MessageCreateEvent, which runs corresponding commands
