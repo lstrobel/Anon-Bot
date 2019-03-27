@@ -30,7 +30,7 @@ public class AnonymousModel {
     //TODO: Fix that
     private final Logger LOGGER = LoggerFactory.getLogger(AnonymousModel.class);
     
-    private Connection connection;
+    private Connection connection; // Our database connection
     
     private AnonymousModel() {
         try {

@@ -70,34 +70,12 @@ public class CommandHandler {
         sb.append("` ");
         
         if (content.substring(1).startsWith("anon")) {
-            sb.append(content.substring(content.indexOf("anon") + 4).trim());
-        } else {
+            sb.append(content.substring(5).trim());
+        } else { // Preparation for when users dont have to enter the command to speak
             sb.append(content.trim());
         }
         
         return sb.toString();
-    }
-    
-    /**
-     * Takes a MessageCreateEvent and executes any relevant commands, if that message event
-     * turns out to be a valid command.
-     *
-     * @param prefix       The prefix used to determine if a message is a command
-     * @param messageEvent The MessageCreateEvent to parse
-     * @return A Mono to subscribe to for reactive responses
-     */
-    public static Mono<Void> handleCommand(String prefix, MessageCreateEvent messageEvent) {
-        return Mono.just(messageEvent)
-                // Remove messages from bot users
-                .filter(event -> event.getMessage().getAuthor().map(user -> !user.isBot()).orElse(false))
-                // Map to Mono<String> representing the content
-                .flatMap(event -> Mono.justOrEmpty(event.getMessage().getContent()))
-                // Search through COMMAND_MAP and execute matching commands
-                .flatMap(content -> Flux.fromIterable(COMMAND_MAP.entrySet())
-                        .filter(entry -> content.startsWith(prefix + entry.getKey()))
-                        .flatMap(entry -> entry.getValue().execute(messageEvent))
-                        .next()
-                );
     }
     
     // TODO: Javadoc
@@ -120,5 +98,27 @@ public class CommandHandler {
             LOGGER.error("Error in generateName", e);
         }
         return null;
+    }
+    
+    /**
+     * Takes a MessageCreateEvent and executes any relevant commands, if that message event
+     * turns out to be a valid command.
+     *
+     * @param prefix       The prefix used to determine if a message is a command
+     * @param messageEvent The MessageCreateEvent to parse
+     * @return A Mono to subscribe to for reactive responses
+     */
+    public static Mono<Void> handleCommand(String prefix, MessageCreateEvent messageEvent) {
+        return Mono.just(messageEvent)
+                // Remove messages from bot users
+                .filter(event -> event.getMessage().getAuthor().map(user -> !user.isBot()).orElse(false))
+                // Map to Mono<String> representing the content
+                .flatMap(event -> Mono.justOrEmpty(event.getMessage().getContent()))
+                // Search through COMMAND_MAP and execute matching commands
+                .flatMap(content -> Flux.fromIterable(COMMAND_MAP.entrySet())
+                        .filter(entry -> content.startsWith(prefix + entry.getKey()))
+                        .flatMap(entry -> entry.getValue().execute(messageEvent))
+                        .next()
+                );
     }
 }
