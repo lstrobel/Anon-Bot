@@ -95,3 +95,4 @@ gradle-app.setting
 .idea/
 /config.properties
 /sqlite/
+/*.db
